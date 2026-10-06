@@ -1,0 +1,1 @@
+Full-stack Python/Flask portfolio project for structured financial inputs, data validation and tax-scenario comparison using synthetic data.

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Scenario Analytics</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">TS</div>
+        <div>
+          <strong>Tax Scenario</strong>
+          <span>Analytics</span>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-view="workspace">Workspace</button>
+        <button class="nav-item" data-view="history">History</button>
+        <button class="nav-item" data-view="about">About</button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="status-dot"></span>
+        <div>
+          <strong>Demo environment</strong>
+          <p>Synthetic data only</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">PORTFOLIO PROJECT</p>
+          <h1>Tax Regime Scenario Analyzer</h1>
+          <p class="subtitle">A compact workflow for organizing company data, validating inputs and comparing tax scenarios.</p>
+        </div>
+        <div class="topbar-actions">
+          <span id="apiStatus" class="pill">Checking API...</span>
+        </div>
+      </header>
+
+      <section id="workspaceView" class="view active">
+        <div class="grid two-col">
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">STEP 1</p>
+                <h2>Select company</h2>
+              </div>
+              <span class="pill neutral" id="companyCount">0 companies</span>
+            </div>
+            <select id="companySelect" class="input"></select>
+            <div id="companyMeta" class="company-meta"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">OPTIONAL</p>
+                <h2>Import monthly CSV</h2>
+              </div>
+            </div>
+            <p class="muted">Expected columns: month, revenue, payroll, costs.</p>
+            <form id="importForm" class="upload-row">
+              <input id="csvFile" type="file" accept=".csv" class="input file-input">
+              <button class="button secondary" type="submit">Import CSV</button>
+            </form>
+            <div id="importFeedback" class="feedback"></div>
+          </section>
+        </div>
+
+        <section class="card spaced">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">STEP 2</p>
+              <h2>Financial inputs</h2>
+            </div>
+            <span class="pill neutral">Annual view</span>
+          </div>
+
+          <form id="analysisForm" class="form-grid">
+            <label>Reference year<input id="referenceYear" class="input" type="number" min="2024" max="2035"></label>
+            <label>Annual revenue<input id="annualRevenue" class="input" type="number" min="0" step="0.01"></label>
+            <label>Annual payroll<input id="payroll" class="input" type="number" min="0" step="0.01"></label>
+            <label>Operating costs<input id="operatingCosts" class="input" type="number" min="0" step="0.01"></label>
+            <label>Service share (%)<input id="serviceShare" class="input" type="number" min="0" max="100" step="0.01"></label>
+            <label>Commerce share (%)<input id="commerceShare" class="input" type="number" min="0" max="100" step="0.01"></label>
+            <label class="wide">Source note<input id="sourceNote" class="input" type="text" placeholder="e.g. Synthetic baseline scenario"></label>
+            <div class="form-actions wide">
+              <button class="button primary" type="submit">Save & run comparison</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="resultsSection" class="spaced hidden">
+          <div class="kpi-grid">
+            <article class="kpi-card">
+              <span>Lowest scenario</span>
+              <strong id="bestScenario">—</strong>
+            </article>
+            <article class="kpi-card">
+              <span>Best annual estimate</span>
+              <strong id="bestTax">—</strong>
+            </article>
+            <article class="kpi-card">
+              <span>Range between scenarios</span>
+              <strong id="annualDifference">—</strong>
+            </article>
+          </div>
+
+          <div class="grid results-grid spaced">
+            <section class="card">
+              <div class="card-header">
+                <div>
+                  <p class="eyebrow">STEP 3</p>
+                  <h2>Scenario comparison</h2>
+                </div>
+              </div>
+              <div id="scenarioTable"></div>
+            </section>
+
+            <section class="card">
+              <div class="card-header">
+                <div>
+                  <p class="eyebrow">VISUAL</p>
+                  <h2>Estimated annual burden</h2>
+                </div>
+              </div>
+              <div id="barChart" class="bar-chart"></div>
+            </section>
+          </div>
+
+          <section class="card spaced">
+            <div class="card-header"><h2>Validation notes</h2></div>
+            <div id="alerts"></div>
+            <p id="disclaimer" class="disclaimer"></p>
+          </section>
+        </section>
+      </section>
+
+      <section id="historyView" class="view">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <p class="eyebrow">AUDITABILITY</p>
+              <h2>Simulation history</h2>
+            </div>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </section>
+
+      <section id="aboutView" class="view">
+        <section class="card prose">
+          <p class="eyebrow">ABOUT THE PROJECT</p>
+          <h2>Why this exists</h2>
+          <p>This repository is an anonymized portfolio rebuild inspired by a real process-improvement challenge in an accounting workflow. The original problem involved scattered financial inputs, manual comparisons and limited traceability between source data and management decisions.</p>
+          <p>The public version uses only fictional companies and synthetic figures. The tax formulas are deliberately simplified: the project demonstrates software design, data organization, validation, auditability and decision-support logic rather than tax compliance.</p>
+          <div class="about-grid">
+            <div><strong>Backend</strong><span>Python · Flask · SQLite</span></div>
+            <div><strong>Frontend</strong><span>HTML · CSS · JavaScript</span></div>
+            <div><strong>Testing</strong><span>Pytest</span></div>
+            <div><strong>Deployment</strong><span>Docker · Gunicorn</span></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
