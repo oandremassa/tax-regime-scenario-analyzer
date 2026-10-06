@@ -1,35 +1,27 @@
-# Case study
+# Case study — accounting process improvement
 
-## Context
+## Operational challenge
 
-The project started from a process problem rather than a coding exercise. Financial and operational information was spread across spreadsheets and manual routines, while scenario comparisons were difficult to reproduce and review later.
+A tax comparison can look like a spreadsheet exercise, but the practical workflow is broader: client master data may be incomplete, source documents arrive in different formats, financial periods are inconsistent, accounting and fiscal information must be reconciled, and the final result needs to be explainable to both specialists and decision-makers.
 
-The goal of the public rebuild is to show how I translated that kind of workflow into a small data application without exposing production information.
+The portfolio case therefore focuses on **workflow quality** as much as calculation output.
 
-## Main problems mapped
+## Product response
 
-- company information was not treated as a consistent master dataset;
-- financial inputs could arrive in different files and formats;
-- calculations depended on manual consolidation;
-- validation issues were easy to miss;
-- previous simulations were difficult to trace;
-- management needed a clearer summary instead of another spreadsheet with raw formulas.
+The application centralizes company master data, a 12-month financial matrix and source-document intake. It makes missing or inconsistent context visible through a validation center before exposing the three-regime comparison. The final result is available both as an analyst-facing component breakdown and an executive report.
 
-## Solution approach
+## Why the three regimes are always visible
 
-I separated the workflow into four layers:
+A comparison product is easier to interpret when the output structure is consistent. Even when one scenario is mathematically unattractive, keeping Simples Nacional, Lucro Presumido and Lucro Real in the same presentation helps users understand the magnitude and composition of the alternatives.
 
-1. **Company master data** — one structured record per company.
-2. **Financial assumptions** — annual revenue, payroll, costs and business mix.
-3. **Scenario engine** — a dedicated calculation module instead of formulas embedded in the interface.
-4. **Decision-support output** — comparable annual burden, effective rate, monthly equivalent and validation notes.
+## Why 12 months matter
 
-A small CSV ingestion step was added to represent the transition from operational spreadsheets to structured application data.
+Month-only comparisons can overreact to seasonality. The public rebuild therefore seeds and expects a complete fiscal-year view, while explicitly flagging incomplete periods.
 
-## What I would change for production
+## Why document history matters
 
-A production version would require validated tax rules, role-based permissions, encrypted storage, a production database, document-level audit trails, regulatory versioning and review by qualified tax professionals. Those elements are intentionally outside the scope of this public repository.
+A scenario is more defensible when users can see which evidence was uploaded, which parser handled it, whether the file generated warnings, and when the calculation was created. This is why documents, simulations and audit events are modeled as first-class records rather than temporary UI state.
 
-## Portfolio focus
+## Public reconstruction
 
-The value of this project is in the workflow design: data modeling, validation, traceability, API structure and translating a real operational problem into software that is easier to use and review.
+The original business context is not copied into this repository. The public version preserves the engineering pattern — inputs, evidence, controls, scenario transparency and auditability — using fictional companies, synthetic financial values and an illustrative calculation engine.

@@ -1,1 +1,1 @@
-Full-stack Python/Flask portfolio project for structured financial inputs, data validation and tax-scenario comparison using synthetic data.
+Full-stack Flask portfolio platform for 12-month financial data, evidence intake, validation, tax-regime scenario analysis, executive reporting and auditability — using synthetic data.

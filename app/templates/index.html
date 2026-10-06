@@ -1,174 +1,275 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tax Scenario Analytics</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Tax Strategy Workspace — public portfolio demonstration of a structured accounting and tax-planning workflow.">
+  <title>Tax Strategy Workspace</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">TS</div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">TS</div>
+      <div>
+        <strong>Tax Strategy</strong>
+        <span>Workspace</span>
+      </div>
+    </div>
+
+    <div class="portfolio-flag">
+      <span class="dot"></span>
+      Public portfolio edition
+    </div>
+
+    <nav class="nav" aria-label="Primary navigation">
+      <button class="nav-item active" data-view="dashboard"><span class="nav-icon">⌂</span><span>Executive Dashboard</span></button>
+      <button class="nav-item" data-view="companies"><span class="nav-icon">▦</span><span>Companies</span></button>
+      <button class="nav-item" data-view="workspace"><span class="nav-icon">≋</span><span>Financial Workspace</span></button>
+      <button class="nav-item" data-view="sources"><span class="nav-icon">⇧</span><span>Data Sources</span></button>
+      <button class="nav-item" data-view="validations"><span class="nav-icon">✓</span><span>Validation Center</span><span class="nav-badge" id="navValidationCount">0</span></button>
+      <button class="nav-item" data-view="analysis"><span class="nav-icon">◫</span><span>Tax Analysis</span></button>
+      <button class="nav-item" data-view="report"><span class="nav-icon">▤</span><span>Executive Report</span></button>
+      <button class="nav-item" data-view="history"><span class="nav-icon">↺</span><span>History & Audit</span></button>
+      <button class="nav-item" data-view="rules"><span class="nav-icon">⚙</span><span>Rules & Sources</span></button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="avatar">AM</div>
+        <div><strong>Portfolio User</strong><span>Fiscal Analyst · Demo</span></div>
+      </div>
+      <div class="engine-chip"><span>Engine</span><strong id="engineVersion">—</strong></div>
+    </div>
+  </aside>
+
+  <section class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation">☰</button>
         <div>
-          <strong>Tax Scenario</strong>
-          <span>Analytics</span>
+          <p class="page-kicker" id="pageKicker">Overview</p>
+          <h1 id="pageTitle">Executive Dashboard</h1>
         </div>
       </div>
-      <nav>
-        <button class="nav-item active" data-view="workspace">Workspace</button>
-        <button class="nav-item" data-view="history">History</button>
-        <button class="nav-item" data-view="about">About</button>
-      </nav>
-      <div class="sidebar-note">
-        <span class="status-dot"></span>
-        <div>
-          <strong>Demo environment</strong>
-          <p>Synthetic data only</p>
+      <div class="topbar-actions">
+        <div class="context-select">
+          <span>Company</span>
+          <select id="companySelect"></select>
         </div>
+        <div class="context-select">
+          <span>Analysis</span>
+          <select id="analysisSelect"></select>
+        </div>
+        <button class="icon-btn" id="refreshBtn" title="Refresh data">↻</button>
       </div>
-    </aside>
+    </header>
 
-    <main class="main-content">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">PORTFOLIO PROJECT</p>
-          <h1>Tax Regime Scenario Analyzer</h1>
-          <p class="subtitle">A compact workflow for organizing company data, validating inputs and comparing tax scenarios.</p>
+    <main class="content">
+      <div class="demo-banner">
+        <strong>Portfolio demonstration.</strong> All companies, identifiers and financial values are synthetic. Calculation logic is illustrative and requires professional review.
+      </div>
+
+      <section class="view active" data-view-panel="dashboard">
+        <div class="hero-row">
+          <div>
+            <p class="eyebrow">FISCAL YEAR INTELLIGENCE</p>
+            <h2 id="dashboardCompany">Loading workspace…</h2>
+            <p class="lead" id="dashboardContext">Structured financial data, evidence, validation and scenario analysis in one traceable workflow.</p>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-secondary" data-goto="workspace">Review financial data</button>
+            <button class="btn btn-primary" id="dashboardRunBtn">Run analysis</button>
+          </div>
         </div>
-        <div class="topbar-actions">
-          <span id="apiStatus" class="pill">Checking API...</span>
+
+        <div class="kpi-grid">
+          <article class="kpi-card"><span>Annual revenue</span><strong id="kpiRevenue">—</strong><small id="kpiRevenueMeta">12-month dataset</small></article>
+          <article class="kpi-card"><span>Current tax baseline</span><strong id="kpiCurrentTax">—</strong><small id="kpiCurrentTaxRate">— effective</small></article>
+          <article class="kpi-card"><span>Open validations</span><strong id="kpiValidations">—</strong><small id="kpiBlocking">— blocking</small></article>
+          <article class="kpi-card"><span>Evidence documents</span><strong id="kpiDocuments">—</strong><small id="kpiDocumentsMeta">processed sources</small></article>
         </div>
-      </header>
 
-      <section id="workspaceView" class="view active">
-        <div class="grid two-col">
-          <section class="card">
-            <div class="card-header">
-              <div>
-                <p class="eyebrow">STEP 1</p>
-                <h2>Select company</h2>
-              </div>
-              <span class="pill neutral" id="companyCount">0 companies</span>
+        <div class="grid grid-7-5">
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">12-MONTH VIEW</p><h3>Revenue evolution</h3></div><span class="soft-chip" id="periodChip">FY2026</span></div>
+            <div class="revenue-chart" id="revenueChart"></div>
+            <div class="chart-legend"><span><i class="legend-service"></i>Services</span><span><i class="legend-commerce"></i>Commerce</span><span><i class="legend-industry"></i>Industry</span></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">ACTIVITY MIX</p><h3>Revenue composition</h3></div></div>
+            <div class="donut-wrap">
+              <div class="donut" id="mixDonut"><div><strong id="donutTotal">—</strong><span>Total revenue</span></div></div>
+              <div class="mix-list" id="mixList"></div>
             </div>
-            <select id="companySelect" class="input"></select>
-            <div id="companyMeta" class="company-meta"></div>
-          </section>
+          </article>
+        </div>
 
-          <section class="card">
-            <div class="card-header">
-              <div>
-                <p class="eyebrow">OPTIONAL</p>
-                <h2>Import monthly CSV</h2>
-              </div>
-            </div>
-            <p class="muted">Expected columns: month, revenue, payroll, costs.</p>
-            <form id="importForm" class="upload-row">
-              <input id="csvFile" type="file" accept=".csv" class="input file-input">
-              <button class="button secondary" type="submit">Import CSV</button>
+        <div class="grid grid-8-4">
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">SCENARIO BENCHMARK</p><h3>Estimated annual burden</h3></div><button class="link-btn" data-goto="analysis">Open detailed analysis →</button></div>
+            <div class="scenario-bars" id="dashboardScenarioBars"><div class="skeleton tall"></div></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">WORKFLOW HEALTH</p><h3>Readiness</h3></div></div>
+            <div class="readiness" id="readinessPanel"></div>
+          </article>
+        </div>
+
+        <div class="grid grid-6-6">
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">LATEST ACTIVITY</p><h3>Audit trail</h3></div><button class="link-btn" data-goto="history">View full history →</button></div>
+            <div class="activity-list" id="dashboardActivity"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">EXECUTIVE SIGNAL</p><h3>Latest scenario result</h3></div></div>
+            <div id="executiveSignal" class="executive-signal"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="companies">
+        <div class="section-header">
+          <div><p class="eyebrow">MASTER DATA</p><h2>Company Registry</h2><p>Centralize the minimum fiscal profile used by each analysis.</p></div>
+          <button class="btn btn-primary" id="newCompanyBtn">+ New company</button>
+        </div>
+        <div class="grid grid-4-8">
+          <article class="card flush">
+            <div class="search-box"><input id="companySearch" placeholder="Search companies…"></div>
+            <div class="company-list" id="companyList"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">PROFILE</p><h3 id="companyProfileTitle">Company details</h3></div><span class="soft-chip">Editable demo data</span></div>
+            <form id="companyForm" class="form-grid">
+              <label class="span-2">Legal name<input name="legal_name" required></label>
+              <label>Trade name<input name="trade_name"></label>
+              <label>Portfolio identifier<input name="identifier" disabled></label>
+              <label>CNAE / activity<input name="cnae"></label>
+              <label>Current regime<select name="current_regime"><option>Simples Nacional</option><option>Lucro Presumido</option><option>Lucro Real</option></select></label>
+              <label>City<input name="city"></label>
+              <label>State<input name="state" maxlength="2"></label>
+              <label>Service annex<input name="service_annex"></label>
+              <label>ISS rate (%)<input name="iss_rate" type="number" step="0.01" min="0" max="100"></label>
+              <label>ICMS rate (%)<input name="icms_rate" type="number" step="0.01" min="0" max="100"></label>
+              <label class="span-2">Internal notes<textarea name="notes" rows="4"></textarea></label>
+              <div class="form-actions span-2"><span class="save-status" id="companySaveStatus"></span><button class="btn btn-primary" type="submit">Save company profile</button></div>
             </form>
-            <div id="importFeedback" class="feedback"></div>
-          </section>
+          </article>
         </div>
-
-        <section class="card spaced">
-          <div class="card-header">
-            <div>
-              <p class="eyebrow">STEP 2</p>
-              <h2>Financial inputs</h2>
-            </div>
-            <span class="pill neutral">Annual view</span>
-          </div>
-
-          <form id="analysisForm" class="form-grid">
-            <label>Reference year<input id="referenceYear" class="input" type="number" min="2024" max="2035"></label>
-            <label>Annual revenue<input id="annualRevenue" class="input" type="number" min="0" step="0.01"></label>
-            <label>Annual payroll<input id="payroll" class="input" type="number" min="0" step="0.01"></label>
-            <label>Operating costs<input id="operatingCosts" class="input" type="number" min="0" step="0.01"></label>
-            <label>Service share (%)<input id="serviceShare" class="input" type="number" min="0" max="100" step="0.01"></label>
-            <label>Commerce share (%)<input id="commerceShare" class="input" type="number" min="0" max="100" step="0.01"></label>
-            <label class="wide">Source note<input id="sourceNote" class="input" type="text" placeholder="e.g. Synthetic baseline scenario"></label>
-            <div class="form-actions wide">
-              <button class="button primary" type="submit">Save & run comparison</button>
-            </div>
-          </form>
-        </section>
-
-        <section id="resultsSection" class="spaced hidden">
-          <div class="kpi-grid">
-            <article class="kpi-card">
-              <span>Lowest scenario</span>
-              <strong id="bestScenario">—</strong>
-            </article>
-            <article class="kpi-card">
-              <span>Best annual estimate</span>
-              <strong id="bestTax">—</strong>
-            </article>
-            <article class="kpi-card">
-              <span>Range between scenarios</span>
-              <strong id="annualDifference">—</strong>
-            </article>
-          </div>
-
-          <div class="grid results-grid spaced">
-            <section class="card">
-              <div class="card-header">
-                <div>
-                  <p class="eyebrow">STEP 3</p>
-                  <h2>Scenario comparison</h2>
-                </div>
-              </div>
-              <div id="scenarioTable"></div>
-            </section>
-
-            <section class="card">
-              <div class="card-header">
-                <div>
-                  <p class="eyebrow">VISUAL</p>
-                  <h2>Estimated annual burden</h2>
-                </div>
-              </div>
-              <div id="barChart" class="bar-chart"></div>
-            </section>
-          </div>
-
-          <section class="card spaced">
-            <div class="card-header"><h2>Validation notes</h2></div>
-            <div id="alerts"></div>
-            <p id="disclaimer" class="disclaimer"></p>
-          </section>
-        </section>
       </section>
 
-      <section id="historyView" class="view">
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <p class="eyebrow">AUDITABILITY</p>
-              <h2>Simulation history</h2>
-            </div>
-          </div>
-          <div id="historyList" class="history-list"></div>
-        </section>
+      <section class="view" data-view-panel="workspace">
+        <div class="section-header">
+          <div><p class="eyebrow">ANALYSIS INPUTS</p><h2>Financial Workspace</h2><p>Review the full fiscal year before running the scenario engine.</p></div>
+          <div class="section-actions"><button class="btn btn-secondary" id="newAnalysisBtn">+ New analysis</button><button class="btn btn-primary" id="saveMonthlyBtn">Save financial data</button></div>
+        </div>
+        <div class="workspace-summary" id="workspaceSummary"></div>
+        <article class="card table-card">
+          <div class="table-toolbar"><div><strong>Monthly financial matrix</strong><span>Values in BRL</span></div><div class="table-note">12 months · editable</div></div>
+          <div class="table-scroll"><table class="data-table monthly-table"><thead><tr><th>Month</th><th>Commerce</th><th>Industry</th><th>Services</th><th>Payroll</th><th>Costs</th><th>Expenses</th><th>Tax paid</th><th>Total revenue</th></tr></thead><tbody id="monthlyTableBody"></tbody><tfoot id="monthlyTableFoot"></tfoot></table></div>
+        </article>
+        <div class="grid grid-6-6">
+          <article class="card"><div class="card-head"><div><p class="eyebrow">DATA QUALITY</p><h3>Period coverage</h3></div></div><div id="coveragePanel"></div></article>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">PROFITABILITY PROXY</p><h3>Operating structure</h3></div></div><div id="profitPanel"></div></article>
+        </div>
       </section>
 
-      <section id="aboutView" class="view">
-        <section class="card prose">
-          <p class="eyebrow">ABOUT THE PROJECT</p>
-          <h2>Why this exists</h2>
-          <p>This repository is an anonymized portfolio rebuild inspired by a real process-improvement challenge in an accounting workflow. The original problem involved scattered financial inputs, manual comparisons and limited traceability between source data and management decisions.</p>
-          <p>The public version uses only fictional companies and synthetic figures. The tax formulas are deliberately simplified: the project demonstrates software design, data organization, validation, auditability and decision-support logic rather than tax compliance.</p>
-          <div class="about-grid">
-            <div><strong>Backend</strong><span>Python · Flask · SQLite</span></div>
-            <div><strong>Frontend</strong><span>HTML · CSS · JavaScript</span></div>
-            <div><strong>Testing</strong><span>Pytest</span></div>
-            <div><strong>Deployment</strong><span>Docker · Gunicorn</span></div>
-          </div>
-        </section>
+      <section class="view" data-view-panel="sources">
+        <div class="section-header"><div><p class="eyebrow">EVIDENCE LAYER</p><h2>Data Sources</h2><p>Upload supporting files and preserve document traceability.</p></div></div>
+        <div class="grid grid-5-7">
+          <article class="card upload-card">
+            <p class="eyebrow">DOCUMENT INTAKE</p><h3>Upload supporting evidence</h3>
+            <div class="drop-zone" id="dropZone"><div class="upload-icon">⇧</div><strong>Drop files here</strong><span>or click to browse</span><small>CSV, XLSX, XML, TXT or PDF · max 12 MB</small><input id="fileInput" type="file" multiple accept=".csv,.xlsx,.xlsm,.xml,.txt,.dat,.pdf" hidden></div>
+            <div class="upload-help"><div><strong>Structured import</strong><span>Recognized monthly CSV/XLSX files can update the financial workspace.</span></div><div><strong>Traceability</strong><span>Every file stores its parser, status, timestamp and SHA-256 reference.</span></div></div>
+            <div id="uploadStatus"></div>
+          </article>
+          <article class="card table-card">
+            <div class="card-head"><div><p class="eyebrow">DOCUMENT HISTORY</p><h3>Processed sources</h3></div><span class="soft-chip" id="documentCountChip">0 documents</span></div>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>File</th><th>Type</th><th>Parser</th><th>Status</th><th>Uploaded</th></tr></thead><tbody id="documentsTable"></tbody></table></div>
+          </article>
+        </div>
+        <div class="integration-grid">
+          <div class="integration-card"><span class="integration-icon">XML</span><div><strong>NF-e / XML proxy</strong><small>Document value and metadata recognition</small></div><span class="status-pill good">Available</span></div>
+          <div class="integration-card"><span class="integration-icon">DRE</span><div><strong>Accounting spreadsheet</strong><small>Monthly financial structure detection</small></div><span class="status-pill good">Available</span></div>
+          <div class="integration-card"><span class="integration-icon">PG</span><div><strong>PGDAS-like text</strong><small>Baseline evidence recognition</small></div><span class="status-pill good">Available</span></div>
+          <div class="integration-card"><span class="integration-icon">PDF</span><div><strong>PDF evidence</strong><small>Stored for manual review and traceability</small></div><span class="status-pill warn">Manual review</span></div>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="validations">
+        <div class="section-header"><div><p class="eyebrow">CONTROL LAYER</p><h2>Validation Center</h2><p>Human review remains explicit before a tax scenario is treated as decision-ready.</p></div><button class="btn btn-secondary" id="refreshValidationsBtn">Refresh checks</button></div>
+        <div class="validation-stats" id="validationStats"></div>
+        <div class="filter-row"><button class="filter active" data-validation-filter="all">All</button><button class="filter" data-validation-filter="pending">Pending</button><button class="filter" data-validation-filter="blocking">Blocking</button><button class="filter" data-validation-filter="validated">Validated</button></div>
+        <div class="validation-list" id="validationList"></div>
+      </section>
+
+      <section class="view" data-view-panel="analysis">
+        <div class="section-header">
+          <div><p class="eyebrow">COMPARATIVE ENGINE</p><h2>Tax Regime Analysis</h2><p>Compare all three regimes with visible components, assumptions and data-quality context.</p></div>
+          <button class="btn btn-primary btn-large" id="runAnalysisBtn">Run scenario engine</button>
+        </div>
+        <div class="analysis-status" id="analysisStatus"></div>
+        <div class="scenario-cards" id="scenarioCards"></div>
+        <div class="grid grid-7-5">
+          <article class="card table-card">
+            <div class="card-head"><div><p class="eyebrow">TRANSPARENCY</p><h3>Tax component breakdown</h3></div><select id="componentScenarioSelect" class="compact-select"></select></div>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>Tax component</th><th>Annual estimate</th><th>Share of scenario</th><th>Effective on revenue</th></tr></thead><tbody id="componentsTable"></tbody></table></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">ASSUMPTIONS</p><h3>Model context</h3></div></div>
+            <div id="assumptionsPanel" class="assumptions"></div>
+          </article>
+        </div>
+        <div class="grid grid-6-6">
+          <article class="card"><div class="card-head"><div><p class="eyebrow">MARGIN VIEW</p><h3>Operating profile</h3></div></div><div id="analysisOperatingProfile"></div></article>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">DECISION SUPPORT</p><h3>Scenario delta</h3></div></div><div id="scenarioDelta"></div></article>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="report">
+        <div class="section-header no-print"><div><p class="eyebrow">CLIENT-READY OUTPUT</p><h2>Executive Report</h2><p>A concise, transparent decision summary generated from the latest simulation.</p></div><button class="btn btn-primary" id="printReportBtn">Print / Save PDF</button></div>
+        <article class="report-sheet" id="reportSheet">
+          <div class="report-cover"><div><span class="report-brand">TAX STRATEGY WORKSPACE</span><h2>Tax Regime Scenario Review</h2><p id="reportCompanyName">—</p></div><div class="report-meta"><span id="reportPeriod">—</span><span>Public portfolio edition</span></div></div>
+          <div class="report-disclaimer">Illustrative portfolio analysis. Not tax, accounting or legal advice. Human validation is required before any real-world decision.</div>
+          <div class="report-kpis" id="reportKpis"></div>
+          <div class="report-section"><div class="report-section-title"><span>01</span><h3>Executive conclusion</h3></div><div id="reportConclusion" class="report-narrative"></div></div>
+          <div class="report-section"><div class="report-section-title"><span>02</span><h3>Scenario comparison</h3></div><div class="report-scenarios" id="reportScenarios"></div></div>
+          <div class="report-section"><div class="report-section-title"><span>03</span><h3>Tax detail</h3></div><div id="reportTaxDetail"></div></div>
+          <div class="report-section"><div class="report-section-title"><span>04</span><h3>Data quality & review notes</h3></div><div id="reportValidations"></div></div>
+          <div class="report-footer"><span>Generated by Tax Strategy Workspace</span><span id="reportTimestamp"></span></div>
+        </article>
+      </section>
+
+      <section class="view" data-view-panel="history">
+        <div class="section-header"><div><p class="eyebrow">TRACEABILITY</p><h2>History & Audit</h2><p>Keep simulation versions, document intake and relevant user actions visible.</p></div></div>
+        <div class="tab-row"><button class="history-tab active" data-history-tab="simulations">Simulations</button><button class="history-tab" data-history-tab="documents">Documents</button><button class="history-tab" data-history-tab="audit">Audit log</button></div>
+        <article class="card table-card"><div class="history-panel active" data-history-panel="simulations"><div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>Analysis</th><th>Best mathematical scenario</th><th>Effective rate</th><th>Engine</th><th>Created</th></tr></thead><tbody id="historySimulations"></tbody></table></div></div><div class="history-panel" data-history-panel="documents"><div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>File</th><th>Type</th><th>Parser</th><th>Status</th><th>Uploaded</th></tr></thead><tbody id="historyDocuments"></tbody></table></div></div><div class="history-panel" data-history-panel="audit"><div class="table-scroll"><table class="data-table"><thead><tr><th>Time</th><th>Action</th><th>Entity</th><th>Field</th><th>From</th><th>To</th></tr></thead><tbody id="historyAudit"></tbody></table></div></div></article>
+      </section>
+
+      <section class="view" data-view-panel="rules">
+        <div class="section-header"><div><p class="eyebrow">GOVERNANCE</p><h2>Rules & Reference Sources</h2><p>Separate software behavior from fiscal reference governance and show what still requires professional confirmation.</p></div></div>
+        <div class="rules-banner"><div><span class="rules-icon">!</span><div><strong>Illustrative engine</strong><p>This public build demonstrates architecture and workflow. It deliberately does not claim production-grade legal accuracy.</p></div></div><div><span>Human review</span><strong>Required</strong></div></div>
+        <div class="grid grid-7-5">
+          <article class="card table-card"><div class="card-head"><div><p class="eyebrow">REFERENCE REGISTER</p><h3>Regulatory sources</h3></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Source</th><th>Topic</th><th>Status</th><th>Version</th></tr></thead><tbody id="rulesSources"></tbody></table></div></article>
+          <article class="card"><div class="card-head"><div><p class="eyebrow">ENGINE STATUS</p><h3>Calculation governance</h3></div></div><div id="engineGovernance"></div></article>
+        </div>
+        <article class="card table-card"><div class="card-head"><div><p class="eyebrow">CONFIGURATION REGISTER</p><h3>Illustrative scenario parameters</h3></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Regime</th><th>Rule</th><th>Value</th><th>Unit</th><th>Status</th><th>Effective from</th></tr></thead><tbody id="rulesTable"></tbody></table></div></article>
       </section>
     </main>
-  </div>
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="companyModal">
+  <div class="modal"><div class="modal-head"><div><p class="eyebrow">NEW MASTER DATA</p><h3>Create company</h3></div><button class="icon-btn modal-close">×</button></div><form id="newCompanyForm" class="form-grid"><label class="span-2">Legal name<input name="legal_name" required></label><label>Trade name<input name="trade_name"></label><label>Portfolio identifier<input name="identifier" placeholder="DEMO-004" required></label><label>City<input name="city"></label><label>State<input name="state" maxlength="2"></label><label>CNAE / activity<input name="cnae"></label><label>Current regime<select name="current_regime"><option>Simples Nacional</option><option>Lucro Presumido</option><option>Lucro Real</option></select></label><div class="form-actions span-2"><button type="button" class="btn btn-secondary modal-close">Cancel</button><button class="btn btn-primary" type="submit">Create company</button></div></form></div>
+</div>
+
+<div class="modal-backdrop" id="analysisModal">
+  <div class="modal"><div class="modal-head"><div><p class="eyebrow">NEW WORKSPACE</p><h3>Create analysis</h3></div><button class="icon-btn modal-close">×</button></div><form id="newAnalysisForm" class="form-grid"><label class="span-2">Analysis title<input name="title" placeholder="FY2027 Tax Planning" required></label><label>Fiscal year<input name="fiscal_year" type="number" value="2027" required></label><label>Period end<input name="period_end" placeholder="2027-12"></label><label class="span-2">Source note<textarea name="source_note" rows="3" placeholder="Optional note about the evidence or period used."></textarea></label><div class="form-actions span-2"><button type="button" class="btn btn-secondary modal-close">Cancel</button><button class="btn btn-primary" type="submit">Create analysis</button></div></form></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

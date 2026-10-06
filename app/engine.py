@@ -1,76 +1,313 @@
-ENGINE_VERSION = "portfolio-1.0"
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Iterable, Mapping
+
+ENGINE_VERSION = "2.0.0-portfolio"
 
 
-def _money(value):
-    return round(float(value or 0), 2)
+@dataclass(frozen=True)
+class Scenario:
+    key: str
+    label: str
+    subtitle: str
+    total_tax: float
+    effective_rate: float
+    components: dict
+    assumptions: list[str]
+    monthly_estimate: float
+
+    def as_dict(self):
+        return {
+            "key": self.key,
+            "label": self.label,
+            "subtitle": self.subtitle,
+            "total_tax": round(self.total_tax, 2),
+            "effective_rate": round(self.effective_rate, 2),
+            "components": {k: round(v, 2) for k, v in self.components.items()},
+            "assumptions": self.assumptions,
+            "monthly_estimate": round(self.monthly_estimate, 2),
+        }
 
 
-def validate_inputs(analysis):
-    alerts = []
-    revenue = float(analysis.get("annual_revenue") or 0)
-    payroll = float(analysis.get("payroll") or 0)
-    service = float(analysis.get("service_share") or 0)
-    commerce = float(analysis.get("commerce_share") or 0)
+SCHEDULES = {
+    "commerce": [
+        (180_000, 0.040, 0),
+        (360_000, 0.073, 5_940),
+        (720_000, 0.095, 13_860),
+        (1_800_000, 0.107, 22_500),
+        (3_600_000, 0.143, 87_300),
+        (4_800_000, 0.190, 378_000),
+    ],
+    "industry": [
+        (180_000, 0.045, 0),
+        (360_000, 0.078, 5_940),
+        (720_000, 0.100, 13_860),
+        (1_800_000, 0.112, 22_500),
+        (3_600_000, 0.147, 85_500),
+        (4_800_000, 0.300, 720_000),
+    ],
+    "annex_iii": [
+        (180_000, 0.060, 0),
+        (360_000, 0.112, 9_360),
+        (720_000, 0.135, 17_640),
+        (1_800_000, 0.160, 35_640),
+        (3_600_000, 0.210, 125_640),
+        (4_800_000, 0.330, 648_000),
+    ],
+    "annex_v": [
+        (180_000, 0.155, 0),
+        (360_000, 0.180, 4_500),
+        (720_000, 0.195, 9_900),
+        (1_800_000, 0.205, 17_100),
+        (3_600_000, 0.230, 62_100),
+        (4_800_000, 0.305, 540_000),
+    ],
+}
 
-    if revenue <= 0:
-        alerts.append("Annual revenue must be greater than zero.")
-    if payroll <= 0:
-        alerts.append("Payroll is empty; payroll-sensitive comparisons may be incomplete.")
-    if abs((service + commerce) - 100) > 0.01:
-        alerts.append("Service share and commerce share should add up to 100%.")
-    return alerts
+
+def _n(value) -> float:
+    try:
+        return max(float(value or 0), 0.0)
+    except (TypeError, ValueError):
+        return 0.0
 
 
-def calculate(analysis):
-    """Illustrative scenario model for portfolio use only.
+def _effective_from_schedule(rbt12: float, schedule: list[tuple[float, float, float]]) -> float:
+    revenue = max(rbt12, 1.0)
+    ceiling, nominal, deduction = schedule[-1]
+    for band in schedule:
+        if revenue <= band[0]:
+            ceiling, nominal, deduction = band
+            break
+    effective = ((revenue * nominal) - deduction) / revenue
+    return max(effective, 0.0)
 
-    The model intentionally uses simplified assumptions. It is not a tax filing
-    calculator and must not be used for legal, accounting or tax advice.
-    """
-    revenue = float(analysis.get("annual_revenue") or 0)
-    payroll = float(analysis.get("payroll") or 0)
-    costs = float(analysis.get("operating_costs") or 0)
-    service_share = float(analysis.get("service_share") or 0) / 100
-    commerce_share = float(analysis.get("commerce_share") or 0) / 100
 
-    if revenue <= 0:
-        return {"engine_version": ENGINE_VERSION, "scenarios": [], "alerts": validate_inputs(analysis)}
+def _irpj_with_surcharge(base: float) -> tuple[float, float]:
+    base = _n(base)
+    regular = base * 0.15
+    surcharge = max(base - 240_000, 0) * 0.10
+    return regular, surcharge
 
-    # Simplified, configurable assumptions for demonstration purposes.
-    simple_rate = 0.075 + max(revenue - 1_000_000, 0) / 12_000_000 * 0.055
-    simple_rate = min(simple_rate, 0.155)
-    simple_estimate = revenue * simple_rate + payroll * 0.006
 
-    presumed_rate = (service_share * 0.1325) + (commerce_share * 0.0775)
-    presumed_estimate = revenue * presumed_rate + payroll * 0.012
+def _aggregate(monthly_rows: Iterable[Mapping]) -> dict:
+    rows = [dict(r) for r in monthly_rows]
+    sums = {
+        "commerce_revenue": 0.0,
+        "industry_revenue": 0.0,
+        "service_revenue": 0.0,
+        "payroll": 0.0,
+        "costs": 0.0,
+        "expenses": 0.0,
+        "current_tax_paid": 0.0,
+    }
+    monthly = []
+    for row in rows:
+        item = {k: _n(row.get(k)) for k in sums}
+        item["month"] = row.get("month")
+        item["revenue"] = item["commerce_revenue"] + item["industry_revenue"] + item["service_revenue"]
+        monthly.append(item)
+        for key in sums:
+            sums[key] += item[key]
 
-    accounting_margin = max(revenue - costs - payroll, 0)
-    actual_estimate = revenue * 0.0365 + accounting_margin * 0.15 + payroll * 0.012
+    total_revenue = sums["commerce_revenue"] + sums["industry_revenue"] + sums["service_revenue"]
+    operating_profit = total_revenue - sums["payroll"] - sums["costs"] - sums["expenses"]
+    return {
+        **sums,
+        "revenue": total_revenue,
+        "operating_profit": operating_profit,
+        "margin": (operating_profit / total_revenue * 100) if total_revenue else 0,
+        "factor_r": (sums["payroll"] / total_revenue) if total_revenue else 0,
+        "months": len(rows),
+        "monthly": monthly,
+    }
 
-    scenarios = [
-        ("Simplified Regime", simple_estimate, "Illustrative revenue-band model"),
-        ("Presumed Profit", presumed_estimate, "Weighted service/commerce assumption"),
-        ("Actual Profit", actual_estimate, "Revenue taxes plus taxable accounting margin"),
+
+def _allocate_simples(total: float, company: Mapping, agg: Mapping) -> dict:
+    service_share = agg["service_revenue"] / agg["revenue"] if agg["revenue"] else 0
+    trade_share = (agg["commerce_revenue"] + agg["industry_revenue"]) / agg["revenue"] if agg["revenue"] else 0
+    iss_icms = total * (0.24 * service_share + 0.28 * trade_share)
+    cpp = total * 0.30
+    remaining = max(total - iss_icms - cpp, 0)
+    return {
+        "IRPJ": remaining * 0.16,
+        "CSLL": remaining * 0.14,
+        "PIS/Pasep": remaining * 0.10,
+        "COFINS": remaining * 0.42,
+        "CPP": cpp,
+        "ISS / ICMS allocation": iss_icms,
+        "Other federal allocation": remaining * 0.18,
+    }
+
+
+def _simples(company: Mapping, agg: Mapping) -> Scenario:
+    rbt12 = max(agg["revenue"], 1)
+    service_annex = "annex_iii" if agg["factor_r"] >= 0.28 else "annex_v"
+    service_annex_label = "Annex III proxy" if service_annex == "annex_iii" else "Annex V proxy"
+
+    commerce_rate = _effective_from_schedule(rbt12, SCHEDULES["commerce"])
+    industry_rate = _effective_from_schedule(rbt12, SCHEDULES["industry"])
+    service_rate = _effective_from_schedule(rbt12, SCHEDULES[service_annex])
+
+    total = (
+        agg["commerce_revenue"] * commerce_rate
+        + agg["industry_revenue"] * industry_rate
+        + agg["service_revenue"] * service_rate
+    )
+    effective = total / agg["revenue"] * 100 if agg["revenue"] else 0
+    assumptions = [
+        f"12-month gross revenue proxy: BRL {agg['revenue']:,.2f}",
+        f"Factor R proxy: {agg['factor_r'] * 100:.2f}%",
+        f"Services modeled under {service_annex_label}",
+        "Component split is illustrative and used only for portfolio transparency.",
     ]
+    return Scenario(
+        "simples",
+        "Simples Nacional",
+        service_annex_label,
+        total,
+        effective,
+        _allocate_simples(total, company, agg),
+        assumptions,
+        total / max(agg["months"], 1),
+    )
 
-    result = []
-    for name, estimate, note in scenarios:
-        result.append({
-            "name": name,
-            "estimated_tax": _money(estimate),
-            "effective_rate": round((estimate / revenue) * 100, 2),
-            "monthly_equivalent": _money(estimate / 12),
-            "note": note,
-        })
 
-    result.sort(key=lambda item: item["estimated_tax"])
-    best = result[0]
+def _presumed(company: Mapping, agg: Mapping) -> Scenario:
+    service = agg["service_revenue"]
+    trade = agg["commerce_revenue"] + agg["industry_revenue"]
+    revenue = agg["revenue"]
+
+    irpj_base = service * 0.32 + trade * 0.08
+    csll_base = service * 0.32 + trade * 0.12
+    irpj, surcharge = _irpj_with_surcharge(irpj_base)
+    csll = csll_base * 0.09
+    pis = revenue * 0.0065
+    cofins = revenue * 0.03
+    iss = service * _n(company.get("iss_rate"))
+    icms_proxy = trade * _n(company.get("icms_rate")) * 0.35
+
+    components = {
+        "IRPJ": irpj,
+        "IRPJ surcharge": surcharge,
+        "CSLL": csll,
+        "PIS": pis,
+        "COFINS": cofins,
+        "ISS": iss,
+        "ICMS gross proxy": icms_proxy,
+    }
+    total = sum(components.values())
+    effective = total / revenue * 100 if revenue else 0
+    assumptions = [
+        "Presumed bases are modeled by activity mix for demonstration.",
+        f"ISS input: {_n(company.get('iss_rate')) * 100:.2f}%",
+        f"ICMS input: {_n(company.get('icms_rate')) * 100:.2f}% with simplified gross proxy.",
+        "Credits, special regimes, withholding and activity-specific adjustments are not modeled.",
+    ]
+    return Scenario("presumed", "Lucro Presumido", "Activity-based presumed bases", total, effective, components, assumptions, total / max(agg["months"], 1))
+
+
+def _actual(company: Mapping, agg: Mapping) -> Scenario:
+    revenue = agg["revenue"]
+    profit = max(agg["operating_profit"], 0)
+    irpj, surcharge = _irpj_with_surcharge(profit)
+    csll = profit * 0.09
+    pis = revenue * 0.0165
+    cofins = revenue * 0.076
+    iss = agg["service_revenue"] * _n(company.get("iss_rate"))
+    trade = agg["commerce_revenue"] + agg["industry_revenue"]
+    icms_proxy = trade * _n(company.get("icms_rate")) * 0.20
+
+    components = {
+        "IRPJ": irpj,
+        "IRPJ surcharge": surcharge,
+        "CSLL": csll,
+        "PIS gross": pis,
+        "COFINS gross": cofins,
+        "ISS": iss,
+        "ICMS gross proxy": icms_proxy,
+    }
+    total = sum(components.values())
+    effective = total / revenue * 100 if revenue else 0
+    assumptions = [
+        f"Operating profit proxy before tax: BRL {profit:,.2f}",
+        "PIS/COFINS are shown gross before non-cumulative credits.",
+        "Loss carryforwards, tax additions/exclusions and tax credits are not modeled.",
+        "Quarterly/annual tax timing is summarized as an annual scenario.",
+    ]
+    return Scenario("actual", "Lucro Real", "Profit-based proxy", total, effective, components, assumptions, total / max(agg["months"], 1))
+
+
+def build_validations(company: Mapping, analysis: Mapping, monthly_rows: Iterable[Mapping], document_types: Iterable[str] = ()) -> list[dict]:
+    rows = [dict(r) for r in monthly_rows]
+    agg = _aggregate(rows)
+    docs = {str(x or "").lower() for x in document_types}
+    items = []
+
+    def add(code, title, detail, severity, source=None):
+        items.append({"code": code, "title": title, "detail": detail, "severity": severity, "source_note": source})
+
+    if agg["months"] < 12:
+        add("PERIOD_COVERAGE", "Incomplete 12-month period", f"Only {agg['months']} month(s) are loaded. A full-year comparison is recommended.", "blocking")
+    if not company.get("cnae"):
+        add("CNAE_MISSING", "Business activity code missing", "CNAE/activity classification is required for a production-grade tax assessment.", "high")
+    if agg["service_revenue"] > 0 and _n(company.get("iss_rate")) <= 0:
+        add("ISS_MISSING", "ISS rate not confirmed", "Service revenue exists but no ISS rate has been confirmed for the company.", "blocking")
+    if agg["service_revenue"] > 0 and not company.get("service_annex"):
+        add("SERVICE_ANNEX", "Service annex requires review", "Service revenue exists and the Simples service-annex reference has not been confirmed.", "high")
+    if not company.get("current_regime"):
+        add("REGIME_MISSING", "Current regime missing", "The company's current tax regime should be recorded for baseline comparison.", "high")
+    if agg["revenue"] <= 0:
+        add("REVENUE_ZERO", "Revenue is zero", "A scenario cannot be calculated without revenue.", "blocking")
+    if agg["payroll"] > agg["revenue"] and agg["revenue"] > 0:
+        add("PAYROLL_HIGH", "Payroll exceeds revenue", "Confirm that payroll and revenue use the same period.", "high")
+    if agg["commerce_revenue"] > 0 and agg["service_revenue"] > 0:
+        add("MIXED_OPERATIONS", "Mixed activity profile", "Commerce and services are both present. Review segregation and applicable taxes by activity.", "medium")
+    if "dre" not in docs:
+        add("DRE_NOT_LOADED", "DRE not loaded", "A DRE or equivalent accounting statement improves cost, expense and profit validation.", "medium")
+    if "pgdas" not in docs and str(company.get("current_regime") or "").lower().startswith("simples"):
+        add("PGDAS_NOT_LOADED", "PGDAS evidence not loaded", "A PGDAS-D extract can be used to reconcile the current Simples baseline.", "medium")
+
+    return items
+
+
+def calculate(company: Mapping, analysis: Mapping, monthly_rows: Iterable[Mapping], document_types: Iterable[str] = ()) -> dict:
+    rows = [dict(r) for r in monthly_rows]
+    agg = _aggregate(rows)
+    validations = build_validations(company, analysis, rows, document_types)
+    blocking_count = sum(1 for v in validations if v["severity"] == "blocking")
+
+    if agg["revenue"] <= 0:
+        scenarios = []
+    else:
+        scenarios = [_simples(company, agg), _presumed(company, agg), _actual(company, agg)]
+
+    scenario_dicts = [s.as_dict() for s in scenarios]
+    sorted_scenarios = sorted(scenario_dicts, key=lambda x: x["total_tax"]) if scenario_dicts else []
+    best = sorted_scenarios[0] if sorted_scenarios else None
+    highest = sorted_scenarios[-1] if sorted_scenarios else None
+    baseline = agg["current_tax_paid"]
+
+    for scenario in scenario_dicts:
+        scenario["difference_vs_lowest"] = round(scenario["total_tax"] - (best["total_tax"] if best else 0), 2)
+        scenario["difference_vs_current"] = round(scenario["total_tax"] - baseline, 2) if baseline else None
 
     return {
         "engine_version": ENGINE_VERSION,
-        "recommended_scenario": best["name"],
-        "estimated_annual_difference": _money(result[-1]["estimated_tax"] - best["estimated_tax"]),
-        "scenarios": result,
-        "alerts": validate_inputs(analysis),
-        "disclaimer": "Portfolio demonstration only. The rates and formulas are intentionally simplified and are not tax advice.",
+        "status": "preliminary" if blocking_count else "review_ready",
+        "blocking_validations": blocking_count,
+        "aggregates": {
+            k: round(v, 2) if isinstance(v, float) else v
+            for k, v in agg.items()
+            if k != "monthly"
+        },
+        "monthly": agg["monthly"],
+        "validations": validations,
+        "scenarios": scenario_dicts,
+        "best_scenario": best,
+        "highest_scenario": highest,
+        "potential_savings_vs_highest": round((highest["total_tax"] - best["total_tax"]), 2) if best and highest else 0,
+        "current_tax_baseline": round(baseline, 2),
+        "portfolio_disclaimer": "Illustrative portfolio model only. It is not tax, accounting or legal advice.",
     }

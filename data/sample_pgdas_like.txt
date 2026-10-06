@@ -1,0 +1,7 @@
+SYNTHETIC PGDAS-D PORTFOLIO SAMPLE
+CNPJ: 00.000.000/0000-00
+SIMPLES NACIONAL
+RBT12: 1.480.000,00
+RECEITA: 132.000,00
+DAS: 15.640,00
+This file is fictional and exists only to demonstrate parser behavior.

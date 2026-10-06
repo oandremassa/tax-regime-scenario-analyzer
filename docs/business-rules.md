@@ -1,31 +1,34 @@
-# Business rules
+# Illustrative business rules
 
-This project demonstrates a rule-driven comparison workflow. It is not a tax compliance system.
+This file documents the public portfolio model, not Brazilian tax advice.
 
-## Input validation
+## Simples Nacional proxy
 
-- annual revenue must be greater than zero;
-- payroll can be zero, but this creates a warning;
-- service share plus commerce share should equal 100%;
-- imported monthly CSV files must contain `month`, `revenue`, `payroll`, and `costs`.
+A schedule-based effective-rate function is applied independently to commerce, industry and services. Services use an Annex III / Annex V proxy based on a Factor R threshold. The component breakdown is an illustrative allocation of the total modeled burden.
 
-## Scenario engine
+## Lucro Presumido proxy
 
-The engine compares three generic representations of common Brazilian tax-regime concepts:
+The engine separates service and trade/industry revenue, applies different presumed IRPJ/CSLL bases, includes PIS/COFINS gross rates, company-entered ISS, and a simplified ICMS gross proxy.
 
-- Simplified Regime;
-- Presumed Profit;
-- Actual Profit.
+## Lucro Real proxy
 
-The rates and formulas are intentionally simplified and are stored in code only to demonstrate architecture, calculation flow, validation and scenario ranking.
+The engine uses an operating-profit proxy as the IRPJ/CSLL base, adds gross PIS/COFINS before credits, ISS and a simplified ICMS proxy. It does not model real-world additions/exclusions, tax losses, credits or special regimes.
 
-## Decision-support output
+## Generated validations
 
-For each scenario, the application returns:
+Examples include:
 
-- estimated annual burden;
-- effective rate;
-- monthly equivalent;
-- a short explanation of the model.
+- incomplete 12-month period;
+- missing CNAE/activity;
+- service revenue without confirmed ISS;
+- missing service-annex review;
+- missing current regime;
+- zero revenue;
+- unusually high payroll;
+- mixed commerce/services profile;
+- missing DRE evidence;
+- missing PGDAS evidence when the current regime is Simples Nacional.
 
-The lowest estimated scenario is highlighted, but the UI explicitly avoids presenting the result as professional tax advice.
+## Human review
+
+A generated validation may be marked `validated` by the demo user. The platform still keeps the original generated control and audit event visible.
