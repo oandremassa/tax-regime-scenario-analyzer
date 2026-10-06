@@ -269,6 +269,7 @@
   <div class="modal"><div class="modal-head"><div><p class="eyebrow">NEW WORKSPACE</p><h3>Create analysis</h3></div><button class="icon-btn modal-close">×</button></div><form id="newAnalysisForm" class="form-grid"><label class="span-2">Analysis title<input name="title" placeholder="FY2027 Tax Planning" required></label><label>Fiscal year<input name="fiscal_year" type="number" value="2027" required></label><label>Period end<input name="period_end" placeholder="2027-12"></label><label class="span-2">Source note<textarea name="source_note" rows="3" placeholder="Optional note about the evidence or period used."></textarea></label><div class="form-actions span-2"><button type="button" class="btn btn-secondary modal-close">Cancel</button><button class="btn btn-primary" type="submit">Create analysis</button></div></form></div>
 </div>
 
+<div class="chart-tooltip" id="chartTooltip" role="tooltip" aria-hidden="true"></div>
 <div class="toast" id="toast"></div>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>

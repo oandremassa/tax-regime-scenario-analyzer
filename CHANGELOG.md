@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.0 — Interactive chart inspection
+
+- Added on-hover values to the 12-month stacked revenue chart.
+- Added segment-level hover inspection to the revenue-composition donut.
+- Added full-value hover details to the scenario benchmark bars.
+- Kept the dashboard visually unchanged until the user points at a chart.
+- Added keyboard-focus support for chart values without adding permanent visual clutter.
+
 ## 2.1.0 — English public-surface revision
 
 - Replaced Portuguese regime names with English portfolio labels.

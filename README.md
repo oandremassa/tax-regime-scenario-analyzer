@@ -20,7 +20,7 @@ The interface is intentionally designed as a B2B internal platform rather than a
 
 ## Product modules
 
-- **Executive Dashboard** — annual revenue, baseline tax, evidence, validations, 12-month revenue evolution, activity mix, scenario benchmark, readiness, audit activity, executive signal.
+- **Executive Dashboard** — annual revenue, baseline tax, evidence, validations, 12-month revenue evolution, activity mix, scenario benchmark, readiness, audit activity, executive signal, and on-hover chart inspection for exact values.
 - **Company Registry** — legal/trade name, synthetic identifier, business activity code, municipality/state, current regime, service tax tier, service-tax / state-VAT assumptions, internal notes.
 - **Financial Workspace** — editable 12-month matrix with commerce, industry, services, payroll, costs, expenses, current tax paid, coverage checks, operating margin and Factor R proxy.
 - **Data Sources** — upload CSV, XLSX, XML, TXT or PDF; store parser/status/timestamp/SHA-256; recognized monthly files can populate the financial matrix.

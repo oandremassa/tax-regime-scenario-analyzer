@@ -159,12 +159,20 @@ function renderDashboard() {
     const c=Number(r.commerce_revenue||0), i=Number(r.industry_revenue||0), s=Number(r.service_revenue||0), total=c+i+s;
     const h=Math.max(total/maxRevenue*100,2);
     const sum=total||1;
-    return `<div class="month-bar-wrap" title="${esc(r.month)} · ${money(total)}"><div class="month-bar-stack" style="--h:${h}"><span class="bar-segment industry" style="height:${i/sum*100}%"></span><span class="bar-segment commerce" style="height:${c/sum*100}%"></span><span class="bar-segment service" style="height:${s/sum*100}%"></span></div><span class="month-label">${shortMonth(r.month)}</span></div>`;
+    const monthLabel = `${shortMonth(r.month)} ${r.month.slice(0,4)}`;
+    return `<div class="month-bar-wrap"><div class="month-bar-stack" style="--h:${h}" data-chart-tooltip tabindex="0" data-tooltip-title="${esc(monthLabel)}" data-tooltip-value="${esc(money(total))}" data-tooltip-meta="Total monthly revenue"><span class="bar-segment industry" style="height:${i/sum*100}%" data-chart-tooltip tabindex="0" data-tooltip-title="Industry · ${esc(monthLabel)}" data-tooltip-value="${esc(money(i))}" data-tooltip-meta="${esc(pct(i/sum*100,1))} of monthly revenue"></span><span class="bar-segment commerce" style="height:${c/sum*100}%" data-chart-tooltip tabindex="0" data-tooltip-title="Commerce · ${esc(monthLabel)}" data-tooltip-value="${esc(money(c))}" data-tooltip-meta="${esc(pct(c/sum*100,1))} of monthly revenue"></span><span class="bar-segment service" style="height:${s/sum*100}%" data-chart-tooltip tabindex="0" data-tooltip-title="Services · ${esc(monthLabel)}" data-tooltip-value="${esc(money(s))}" data-tooltip-meta="${esc(pct(s/sum*100,1))} of monthly revenue"></span></div><span class="month-label">${shortMonth(r.month)}</span></div>`;
   }).join("");
 
   const total = agg.revenue || 1;
   const sPct = agg.service_revenue/total*100, cPct=agg.commerce_revenue/total*100, iPct=agg.industry_revenue/total*100;
   $("mixDonut").style.background = `conic-gradient(#2b7b63 0 ${sPct}%, #506e91 ${sPct}% ${sPct+cPct}%, #c4a25c ${sPct+cPct}% 100%)`;
+  Object.assign($("mixDonut").dataset, {
+    donutTooltip: "true",
+    servicePct: String(sPct), commercePct: String(cPct), industryPct: String(iPct),
+    serviceValue: String(agg.service_revenue), commerceValue: String(agg.commerce_revenue), industryValue: String(agg.industry_revenue),
+    totalValue: String(agg.revenue)
+  });
+  $("mixDonut").setAttribute("tabindex", "0");
   $("donutTotal").textContent = money(agg.revenue, true);
   const mix = [
     ["Services",sPct,"#2b7b63",agg.service_revenue], ["Commerce",cPct,"#506e91",agg.commerce_revenue], ["Industry",iPct,"#c4a25c",agg.industry_revenue]
@@ -194,7 +202,7 @@ function renderDashboardScenarios(sim) {
   const target=$("dashboardScenarioBars");
   if (!sim?.scenarios?.length) { target.innerHTML=`<div class="empty">No simulation available. Run the scenario engine.</div>`; return; }
   const max=Math.max(...sim.scenarios.map(s=>s.total_tax),1);
-  target.innerHTML=sim.scenarios.map(s=>`<div class="scenario-bar-row ${s.key===sim.best_scenario?.key?"best":""}"><div class="scenario-bar-label"><strong>${esc(s.label)}</strong><span>${esc(s.subtitle)}</span></div><div class="scenario-track"><span style="width:${Math.max(s.total_tax/max*100,3)}%"></span></div><div class="scenario-bar-value">${money(s.total_tax,true)}</div><div class="scenario-rate">${pct(s.effective_rate)}</div></div>`).join("");
+  target.innerHTML=sim.scenarios.map(s=>`<div class="scenario-bar-row ${s.key===sim.best_scenario?.key?"best":""}"><div class="scenario-bar-label"><strong>${esc(s.label)}</strong><span>${esc(s.subtitle)}</span></div><div class="scenario-track"><span style="width:${Math.max(s.total_tax/max*100,3)}%" data-chart-tooltip tabindex="0" data-tooltip-title="${esc(s.label)}" data-tooltip-value="${esc(money(s.total_tax))}" data-tooltip-meta="${esc(pct(s.effective_rate))} effective rate"></span></div><div class="scenario-bar-value">${money(s.total_tax,true)}</div><div class="scenario-rate">${pct(s.effective_rate)}</div></div>`).join("");
 }
 
 function renderCompanies() {
@@ -322,6 +330,81 @@ function renderRules(){
   $("rulesTable").innerHTML=(r.rules||[]).map(x=>`<tr><td>${esc(x.regime)}</td><td><strong>${esc(x.rule_name)}</strong></td><td>${Number(x.rule_value).toFixed(4)}</td><td>${esc(x.unit||"—")}</td><td><span class="status-pill warn">${esc(x.status)}</span></td><td>${esc(x.effective_from||"—")}</td></tr>`).join("");
 }
 
+function positionChartTooltip(clientX, clientY){
+  const tooltip=$("chartTooltip");
+  if(!tooltip)return;
+  const margin=12, offset=14;
+  const rect=tooltip.getBoundingClientRect();
+  let left=clientX+offset, top=clientY+offset;
+  if(left+rect.width+margin>window.innerWidth) left=clientX-rect.width-offset;
+  if(top+rect.height+margin>window.innerHeight) top=clientY-rect.height-offset;
+  tooltip.style.left=`${Math.max(margin,left)}px`;
+  tooltip.style.top=`${Math.max(margin,top)}px`;
+}
+
+function showChartTooltip({title,value,meta}, clientX, clientY){
+  const tooltip=$("chartTooltip");
+  if(!tooltip)return;
+  tooltip.innerHTML=`<strong>${esc(title||"")}</strong><span>${esc(value||"")}</span>${meta?`<small>${esc(meta)}</small>`:""}`;
+  tooltip.classList.add("show");
+  tooltip.setAttribute("aria-hidden","false");
+  positionChartTooltip(clientX,clientY);
+}
+
+function hideChartTooltip(){
+  const tooltip=$("chartTooltip");
+  if(!tooltip)return;
+  tooltip.classList.remove("show");
+  tooltip.setAttribute("aria-hidden","true");
+}
+
+function tooltipFromElement(el, clientX, clientY){
+  showChartTooltip({title:el.dataset.tooltipTitle,value:el.dataset.tooltipValue,meta:el.dataset.tooltipMeta},clientX,clientY);
+}
+
+function donutTooltipPayload(donut, clientX, clientY){
+  const rect=donut.getBoundingClientRect();
+  const dx=clientX-(rect.left+rect.width/2), dy=clientY-(rect.top+rect.height/2);
+  const radius=Math.sqrt(dx*dx+dy*dy);
+  if(radius<34){
+    return {title:"Revenue composition",value:money(Number(donut.dataset.totalValue||0)),meta:"Total annual revenue"};
+  }
+  const angle=(Math.atan2(dy,dx)*180/Math.PI+450)%360;
+  const point=angle/3.6;
+  const sPct=Number(donut.dataset.servicePct||0), cPct=Number(donut.dataset.commercePct||0);
+  if(point<sPct) return {title:"Services",value:money(Number(donut.dataset.serviceValue||0)),meta:`${pct(sPct,1)} of annual revenue`};
+  if(point<sPct+cPct) return {title:"Commerce",value:money(Number(donut.dataset.commerceValue||0)),meta:`${pct(cPct,1)} of annual revenue`};
+  const iPct=Number(donut.dataset.industryPct||0);
+  return {title:"Industry",value:money(Number(donut.dataset.industryValue||0)),meta:`${pct(iPct,1)} of annual revenue`};
+}
+
+function wireChartTooltips(){
+  document.addEventListener("pointermove",e=>{
+    const donut=e.target.closest?.('[data-donut-tooltip="true"]');
+    if(donut){showChartTooltip(donutTooltipPayload(donut,e.clientX,e.clientY),e.clientX,e.clientY);return;}
+    const target=e.target.closest?.("[data-chart-tooltip]");
+    if(target)tooltipFromElement(target,e.clientX,e.clientY);
+  });
+  document.addEventListener("pointerover",e=>{
+    const target=e.target.closest?.("[data-chart-tooltip]");
+    if(target)tooltipFromElement(target,e.clientX,e.clientY);
+  });
+  document.addEventListener("pointerout",e=>{
+    if(e.target.closest?.("[data-chart-tooltip], [data-donut-tooltip='true']")) hideChartTooltip();
+  });
+  document.addEventListener("focusin",e=>{
+    const target=e.target.closest?.("[data-chart-tooltip]");
+    if(target){const rect=target.getBoundingClientRect();tooltipFromElement(target,rect.left+rect.width/2,rect.top+rect.height/2);return;}
+    const donut=e.target.closest?.('[data-donut-tooltip="true"]');
+    if(donut){const rect=donut.getBoundingClientRect();showChartTooltip({title:"Revenue composition",value:money(Number(donut.dataset.totalValue||0)),meta:"Move the pointer across the chart to inspect each activity"},rect.left+rect.width/2,rect.top+rect.height/2);}
+  });
+  document.addEventListener("focusout",e=>{
+    if(e.target.closest?.("[data-chart-tooltip], [data-donut-tooltip='true']")) hideChartTooltip();
+  });
+  window.addEventListener("scroll",hideChartTooltip,{passive:true});
+  window.addEventListener("resize",hideChartTooltip);
+}
+
 function readMonthlyTable(){
   return $$("#monthlyTableBody tr").map(tr=>{const row={month:tr.dataset.month};tr.querySelectorAll("input[data-field]").forEach(i=>row[i.dataset.field]=Number(i.value||0));return row;});
 }
@@ -358,6 +441,7 @@ function openModal(id){$(id).classList.add("open")}
 function closeModals(){$$(".modal-backdrop").forEach(x=>x.classList.remove("open"))}
 
 function wireEvents(){
+  wireChartTooltips();
   $$(".nav-item").forEach(b=>b.addEventListener("click",()=>gotoView(b.dataset.view)));
   $$('[data-goto]').forEach(b=>b.addEventListener("click",()=>gotoView(b.dataset.goto)));
   $("mobileMenu").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
