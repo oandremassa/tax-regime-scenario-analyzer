@@ -142,7 +142,7 @@ function renderDashboard() {
   const agg = aggregate(rows);
   const sim = state.simulation;
   $("dashboardCompany").textContent = `${state.company.trade_name || state.company.legal_name} · ${detail.analysis.title}`;
-  $("dashboardContext").textContent = `${state.company.city || "—"}, ${state.company.state || "—"} · ${state.company.current_regime || "Regime not informed"} · ${detail.analysis.period_start} to ${detail.analysis.period_end}`;
+  $("dashboardContext").textContent = `${state.company.city || "—"}, ${state.company.state || "—"} · ${state.company.current_regime || "Tax regime not specified"} · ${detail.analysis.period_start} to ${detail.analysis.period_end}`;
   $("periodChip").textContent = `FY${detail.analysis.fiscal_year}`;
   $("kpiRevenue").textContent = money(agg.revenue, true);
   $("kpiCurrentTax").textContent = money(agg.current_tax_paid, true);

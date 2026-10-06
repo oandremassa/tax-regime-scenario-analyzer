@@ -12,7 +12,7 @@ The application centralizes company master data, a 12-month financial matrix and
 
 ## Why the three regimes are always visible
 
-A comparison product is easier to interpret when the output structure is consistent. Even when one scenario is mathematically unattractive, keeping Simples Nacional, Lucro Presumido and Lucro Real in the same presentation helps users understand the magnitude and composition of the alternatives.
+A comparison product is easier to interpret when the output structure is consistent. Even when one scenario is mathematically unattractive, keeping Brazilian Simplified Tax Regime, Presumed Profit Regime and Actual Profit Regime in the same presentation helps users understand the magnitude and composition of the alternatives.
 
 ## Why 12 months matter
 

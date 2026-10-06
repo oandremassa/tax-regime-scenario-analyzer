@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Mapping
 
-ENGINE_VERSION = "2.0.0-portfolio"
+ENGINE_VERSION = "2.1.0-portfolio"
 
 
 @dataclass(frozen=True)
@@ -124,27 +124,27 @@ def _aggregate(monthly_rows: Iterable[Mapping]) -> dict:
     }
 
 
-def _allocate_simples(total: float, company: Mapping, agg: Mapping) -> dict:
+def _allocate_simplified_regime(total: float, company: Mapping, agg: Mapping) -> dict:
     service_share = agg["service_revenue"] / agg["revenue"] if agg["revenue"] else 0
     trade_share = (agg["commerce_revenue"] + agg["industry_revenue"]) / agg["revenue"] if agg["revenue"] else 0
     iss_icms = total * (0.24 * service_share + 0.28 * trade_share)
     cpp = total * 0.30
     remaining = max(total - iss_icms - cpp, 0)
     return {
-        "IRPJ": remaining * 0.16,
-        "CSLL": remaining * 0.14,
-        "PIS/Pasep": remaining * 0.10,
-        "COFINS": remaining * 0.42,
-        "CPP": cpp,
-        "ISS / ICMS allocation": iss_icms,
+        "Corporate Income Tax (IRPJ)": remaining * 0.16,
+        "Social Contribution on Net Profit (CSLL)": remaining * 0.14,
+        "Social Integration Contribution (PIS/Pasep)": remaining * 0.10,
+        "Social Security Financing Contribution (COFINS)": remaining * 0.42,
+        "Employer Social Security Contribution (CPP)": cpp,
+        "Service Tax / State VAT allocation (ISS/ICMS)": iss_icms,
         "Other federal allocation": remaining * 0.18,
     }
 
 
-def _simples(company: Mapping, agg: Mapping) -> Scenario:
+def _simplified_regime(company: Mapping, agg: Mapping) -> Scenario:
     rbt12 = max(agg["revenue"], 1)
     service_annex = "annex_iii" if agg["factor_r"] >= 0.28 else "annex_v"
-    service_annex_label = "Annex III proxy" if service_annex == "annex_iii" else "Annex V proxy"
+    service_annex_label = "Service Tier III proxy" if service_annex == "annex_iii" else "Service Tier V proxy"
 
     commerce_rate = _effective_from_schedule(rbt12, SCHEDULES["commerce"])
     industry_rate = _effective_from_schedule(rbt12, SCHEDULES["industry"])
@@ -163,12 +163,12 @@ def _simples(company: Mapping, agg: Mapping) -> Scenario:
         "Component split is illustrative and used only for portfolio transparency.",
     ]
     return Scenario(
-        "simples",
-        "Simples Nacional",
+        "simplified_regime",
+        "Brazilian Simplified Tax Regime",
         service_annex_label,
         total,
         effective,
-        _allocate_simples(total, company, agg),
+        _allocate_simplified_regime(total, company, agg),
         assumptions,
         total / max(agg["months"], 1),
     )
@@ -189,23 +189,23 @@ def _presumed(company: Mapping, agg: Mapping) -> Scenario:
     icms_proxy = trade * _n(company.get("icms_rate")) * 0.35
 
     components = {
-        "IRPJ": irpj,
-        "IRPJ surcharge": surcharge,
-        "CSLL": csll,
-        "PIS": pis,
-        "COFINS": cofins,
-        "ISS": iss,
-        "ICMS gross proxy": icms_proxy,
+        "Corporate Income Tax (IRPJ)": irpj,
+        "Corporate Income Tax surcharge (IRPJ)": surcharge,
+        "Social Contribution on Net Profit (CSLL)": csll,
+        "Social Integration Contribution (PIS)": pis,
+        "Social Security Financing Contribution (COFINS)": cofins,
+        "Service Tax (ISS)": iss,
+        "State VAT gross proxy (ICMS)": icms_proxy,
     }
     total = sum(components.values())
     effective = total / revenue * 100 if revenue else 0
     assumptions = [
         "Presumed bases are modeled by activity mix for demonstration.",
-        f"ISS input: {_n(company.get('iss_rate')) * 100:.2f}%",
-        f"ICMS input: {_n(company.get('icms_rate')) * 100:.2f}% with simplified gross proxy.",
+        f"Service Tax input (ISS): {_n(company.get('iss_rate')) * 100:.2f}%",
+        f"State VAT input (ICMS): {_n(company.get('icms_rate')) * 100:.2f}% with simplified gross proxy.",
         "Credits, special regimes, withholding and activity-specific adjustments are not modeled.",
     ]
-    return Scenario("presumed", "Lucro Presumido", "Activity-based presumed bases", total, effective, components, assumptions, total / max(agg["months"], 1))
+    return Scenario("presumed_profit", "Presumed Profit Regime", "Activity-based presumed bases", total, effective, components, assumptions, total / max(agg["months"], 1))
 
 
 def _actual(company: Mapping, agg: Mapping) -> Scenario:
@@ -220,23 +220,23 @@ def _actual(company: Mapping, agg: Mapping) -> Scenario:
     icms_proxy = trade * _n(company.get("icms_rate")) * 0.20
 
     components = {
-        "IRPJ": irpj,
-        "IRPJ surcharge": surcharge,
-        "CSLL": csll,
-        "PIS gross": pis,
-        "COFINS gross": cofins,
-        "ISS": iss,
-        "ICMS gross proxy": icms_proxy,
+        "Corporate Income Tax (IRPJ)": irpj,
+        "Corporate Income Tax surcharge (IRPJ)": surcharge,
+        "Social Contribution on Net Profit (CSLL)": csll,
+        "Social Integration Contribution gross (PIS)": pis,
+        "Social Security Financing Contribution gross (COFINS)": cofins,
+        "Service Tax (ISS)": iss,
+        "State VAT gross proxy (ICMS)": icms_proxy,
     }
     total = sum(components.values())
     effective = total / revenue * 100 if revenue else 0
     assumptions = [
         f"Operating profit proxy before tax: BRL {profit:,.2f}",
-        "PIS/COFINS are shown gross before non-cumulative credits.",
+        "Federal social contributions are shown gross before non-cumulative credits.",
         "Loss carryforwards, tax additions/exclusions and tax credits are not modeled.",
         "Quarterly/annual tax timing is summarized as an annual scenario.",
     ]
-    return Scenario("actual", "Lucro Real", "Profit-based proxy", total, effective, components, assumptions, total / max(agg["months"], 1))
+    return Scenario("actual_profit", "Actual Profit Regime", "Profit-based proxy", total, effective, components, assumptions, total / max(agg["months"], 1))
 
 
 def build_validations(company: Mapping, analysis: Mapping, monthly_rows: Iterable[Mapping], document_types: Iterable[str] = ()) -> list[dict]:
@@ -251,11 +251,11 @@ def build_validations(company: Mapping, analysis: Mapping, monthly_rows: Iterabl
     if agg["months"] < 12:
         add("PERIOD_COVERAGE", "Incomplete 12-month period", f"Only {agg['months']} month(s) are loaded. A full-year comparison is recommended.", "blocking")
     if not company.get("cnae"):
-        add("CNAE_MISSING", "Business activity code missing", "CNAE/activity classification is required for a production-grade tax assessment.", "high")
+        add("BUSINESS_ACTIVITY_CODE_MISSING", "Business activity code missing", "A business activity code is required for a production-grade tax assessment.", "high")
     if agg["service_revenue"] > 0 and _n(company.get("iss_rate")) <= 0:
-        add("ISS_MISSING", "ISS rate not confirmed", "Service revenue exists but no ISS rate has been confirmed for the company.", "blocking")
+        add("SERVICE_TAX_RATE_MISSING", "Service tax rate not confirmed", "Service revenue exists but no Service Tax rate has been confirmed for the company.", "blocking")
     if agg["service_revenue"] > 0 and not company.get("service_annex"):
-        add("SERVICE_ANNEX", "Service annex requires review", "Service revenue exists and the Simples service-annex reference has not been confirmed.", "high")
+        add("SERVICE_TAX_TIER_REVIEW", "Service tax tier requires review", "Service revenue exists and the simplified-regime service-tier reference has not been confirmed.", "high")
     if not company.get("current_regime"):
         add("REGIME_MISSING", "Current regime missing", "The company's current tax regime should be recorded for baseline comparison.", "high")
     if agg["revenue"] <= 0:
@@ -264,10 +264,10 @@ def build_validations(company: Mapping, analysis: Mapping, monthly_rows: Iterabl
         add("PAYROLL_HIGH", "Payroll exceeds revenue", "Confirm that payroll and revenue use the same period.", "high")
     if agg["commerce_revenue"] > 0 and agg["service_revenue"] > 0:
         add("MIXED_OPERATIONS", "Mixed activity profile", "Commerce and services are both present. Review segregation and applicable taxes by activity.", "medium")
-    if "dre" not in docs:
-        add("DRE_NOT_LOADED", "DRE not loaded", "A DRE or equivalent accounting statement improves cost, expense and profit validation.", "medium")
-    if "pgdas" not in docs and str(company.get("current_regime") or "").lower().startswith("simples"):
-        add("PGDAS_NOT_LOADED", "PGDAS evidence not loaded", "A PGDAS-D extract can be used to reconcile the current Simples baseline.", "medium")
+    if not ({"income_statement", "dre"} & docs):
+        add("INCOME_STATEMENT_NOT_LOADED", "Income statement not loaded", "An income statement or equivalent accounting statement improves cost, expense and profit validation.", "medium")
+    if not ({"simplified_regime_filing", "pgdas"} & docs) and str(company.get("current_regime") or "").lower().startswith("brazilian simplified"):
+        add("SIMPLIFIED_FILING_NOT_LOADED", "Simplified-regime filing evidence not loaded", "A simplified-regime filing extract can be used to reconcile the current baseline.", "medium")
 
     return items
 
@@ -281,7 +281,7 @@ def calculate(company: Mapping, analysis: Mapping, monthly_rows: Iterable[Mappin
     if agg["revenue"] <= 0:
         scenarios = []
     else:
-        scenarios = [_simples(company, agg), _presumed(company, agg), _actual(company, agg)]
+        scenarios = [_simplified_regime(company, agg), _presumed(company, agg), _actual(company, agg)]
 
     scenario_dicts = [s.as_dict() for s in scenarios]
     sorted_scenarios = sorted(scenario_dicts, key=lambda x: x["total_tax"]) if scenario_dicts else []

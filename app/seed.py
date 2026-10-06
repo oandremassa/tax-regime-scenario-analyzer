@@ -93,9 +93,9 @@ def seed_demo_data():
         return
 
     sources = [
-        ("Simples Nacional reference schedule", "Brazil", "Simplified regime", "Portfolio reference", "reviewed", "https://www8.receita.fazenda.gov.br/SimplesNacional/"),
-        ("Corporate income tax reference", "Brazil", "IRPJ / CSLL", "Portfolio reference", "reviewed", "https://www.gov.br/receitafederal/"),
-        ("Indirect taxes reference", "Brazil", "PIS / COFINS / ISS / ICMS", "Portfolio reference", "review_required", "https://www.gov.br/receitafederal/"),
+        ("Brazilian Simplified Tax Regime reference schedule", "Brazil", "Simplified regime", "Portfolio reference", "reviewed", "https://www8.receita.fazenda.gov.br/SimplesNacional/"),
+        ("Corporate income tax reference", "Brazil", "Corporate Income Tax / Social Contribution", "Portfolio reference", "reviewed", "https://www.gov.br/receitafederal/"),
+        ("Indirect taxes reference", "Brazil", "Federal social contributions / Service Tax / State VAT", "Portfolio reference", "review_required", "https://www.gov.br/receitafederal/"),
     ]
     for title, jurisdiction, topic, version, status, url in sources:
         db.execute(
@@ -104,12 +104,12 @@ def seed_demo_data():
         )
 
     rules = [
-        ("presumed", "PIS rate", 0.0065, "decimal", "illustrative"),
-        ("presumed", "COFINS rate", 0.03, "decimal", "illustrative"),
-        ("actual", "PIS gross rate", 0.0165, "decimal", "illustrative"),
-        ("actual", "COFINS gross rate", 0.076, "decimal", "illustrative"),
-        ("all", "IRPJ base rate", 0.15, "decimal", "illustrative"),
-        ("all", "CSLL proxy rate", 0.09, "decimal", "illustrative"),
+        ("presumed_profit", "Social Integration Contribution rate", 0.0065, "decimal", "illustrative"),
+        ("presumed_profit", "Social Security Financing Contribution rate", 0.03, "decimal", "illustrative"),
+        ("actual_profit", "Social Integration Contribution gross rate", 0.0165, "decimal", "illustrative"),
+        ("actual_profit", "Social Security Financing Contribution gross rate", 0.076, "decimal", "illustrative"),
+        ("all", "Corporate Income Tax base rate", 0.15, "decimal", "illustrative"),
+        ("all", "Social Contribution on Net Profit proxy rate", 0.09, "decimal", "illustrative"),
     ]
     for regime, name, value, unit, status in rules:
         db.execute(
@@ -121,43 +121,43 @@ def seed_demo_data():
     companies = [
         ({
             "identifier": "DEMO-001",
-            "legal_name": "Aurora Creative Labs Ltda.",
+            "legal_name": "Aurora Creative Labs Ltd.",
             "trade_name": "Aurora Labs",
             "cnae": "6201-5/01",
             "city": "São Paulo",
             "state": "SP",
-            "current_regime": "Simples Nacional",
+            "current_regime": "Brazilian Simplified Tax Regime",
             "service_annex": None,
             "iss_rate": 0.025,
             "icms_rate": 0.00,
             "notes": "Synthetic service company used to demonstrate Factor R and 12-month review.",
-        }, "FY2026 Tax Planning", 2026, _months(2026, 118000, 1.0, 0.0, 36000, 18000, 21000, 0.118), ["dre"]),
+        }, "FY2026 Tax Planning", 2026, _months(2026, 118000, 1.0, 0.0, 36000, 18000, 21000, 0.118), ["income_statement"]),
         ({
             "identifier": "DEMO-002",
-            "legal_name": "Northstar Retail & Services Ltda.",
+            "legal_name": "Northstar Retail & Services Ltd.",
             "trade_name": "Northstar",
             "cnae": "4751-2/01",
             "city": "Campinas",
             "state": "SP",
-            "current_regime": "Lucro Presumido",
+            "current_regime": "Presumed Profit Regime",
             "service_annex": "Mixed operations review",
             "iss_rate": 0.03,
             "icms_rate": 0.12,
             "notes": "Synthetic mixed-operation company with commerce and services.",
-        }, "2026 Strategic Regime Review", 2026, _months(2026, 235000, 0.28, 0.58, 54000, 82000, 31000, 0.142), ["dre", "nfe"]),
+        }, "2026 Strategic Regime Review", 2026, _months(2026, 235000, 0.28, 0.58, 54000, 82000, 31000, 0.142), ["income_statement", "e_invoice"]),
         ({
             "identifier": "DEMO-003",
-            "legal_name": "Lumen Industrial Systems Ltda.",
+            "legal_name": "Lumen Industrial Systems Ltd.",
             "trade_name": "Lumen Systems",
             "cnae": "2829-1/99",
             "city": "Sorocaba",
             "state": "SP",
-            "current_regime": "Lucro Real",
+            "current_regime": "Actual Profit Regime",
             "service_annex": None,
             "iss_rate": 0.02,
             "icms_rate": 0.12,
             "notes": "Synthetic industrial profile for higher-volume scenario testing.",
-        }, "2026 Corporate Tax Benchmark", 2026, _months(2026, 420000, 0.08, 0.12, 87000, 218000, 48000, 0.165), ["dre", "nfe", "xml"]),
+        }, "2026 Corporate Tax Benchmark", 2026, _months(2026, 420000, 0.08, 0.12, 87000, 218000, 48000, 0.165), ["income_statement", "e_invoice", "xml"]),
     ]
 
     for data in companies:

@@ -15,9 +15,9 @@ def test_financial_csv_parser(tmp_path: Path):
     assert result["monthly_rows"][0]["service_revenue"] == 90000
 
 
-def test_pgdas_like_parser(tmp_path: Path):
-    p = tmp_path / "pgdas.txt"
-    p.write_text("PGDAS SIMPLES NACIONAL\nRBT12: 1.200.000,00\nDAS: 12.500,00", encoding="utf-8")
+def test_simplified_regime_filing_parser(tmp_path: Path):
+    p = tmp_path / "simplified_regime_filing.txt"
+    p.write_text("SIMPLIFIED REGIME FILING\nTWELVE_MONTH_REVENUE: 1.200.000,00\nCURRENT_TAX: 12.500,00", encoding="utf-8")
     result = parse_document(p)
-    assert result["parser"] == "pgdas_proxy"
+    assert result["parser"] == "simplified_regime_filing_proxy"
     assert result["rbt12"] == 1200000

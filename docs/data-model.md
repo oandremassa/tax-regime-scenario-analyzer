@@ -1,7 +1,7 @@
 # Data model
 
 ## companies
-Synthetic fiscal master data: identifier, legal/trade names, CNAE/activity, municipality/state, current regime, service-annex reference, ISS/ICMS assumptions and notes.
+Synthetic fiscal master data: identifier, legal/trade names, business activity code, municipality/state, current regime, service-tier reference, service-tax / state-VAT assumptions and notes.
 
 ## analyses
 One tax-planning review for one company, with fiscal year, period, status and source notes.

@@ -2,7 +2,11 @@
 
 A full-stack Flask portfolio application that models a **real accounting-process improvement workflow**: company master data, 12-month financial inputs, document intake, validation, three-regime tax comparison, executive reporting, and complete history/auditability.
 
-This repository is an **anonymized public rebuild inspired by a real process-improvement engagement in an accounting environment**. It contains **no client data, proprietary files, credentials, real CNPJs, or confidential business rules**.
+This repository is an **anonymized public rebuild inspired by a real process-improvement engagement in an accounting environment**. It contains **no client data, proprietary files, credentials, real company tax IDs, or confidential business rules**.
+
+## Language and domain terminology
+
+The public product surface, documentation, demo data and scenario labels are written in English. Brazilian statutory acronyms are used only as secondary identifiers where they help map the English label to source documents or local tax terminology. The primary wording remains English throughout the portfolio project.
 
 ## Why this is more than a calculator
 
@@ -17,11 +21,11 @@ The interface is intentionally designed as a B2B internal platform rather than a
 ## Product modules
 
 - **Executive Dashboard** — annual revenue, baseline tax, evidence, validations, 12-month revenue evolution, activity mix, scenario benchmark, readiness, audit activity, executive signal.
-- **Company Registry** — legal/trade name, synthetic identifier, CNAE/activity, municipality/state, current regime, service annex, ISS/ICMS assumptions, internal notes.
+- **Company Registry** — legal/trade name, synthetic identifier, business activity code, municipality/state, current regime, service tax tier, service-tax / state-VAT assumptions, internal notes.
 - **Financial Workspace** — editable 12-month matrix with commerce, industry, services, payroll, costs, expenses, current tax paid, coverage checks, operating margin and Factor R proxy.
 - **Data Sources** — upload CSV, XLSX, XML, TXT or PDF; store parser/status/timestamp/SHA-256; recognized monthly files can populate the financial matrix.
 - **Validation Center** — blocking/high/medium checks with human review status and traceability.
-- **Tax Analysis** — side-by-side Simples Nacional, Lucro Presumido and Lucro Real, with effective rates, tax component breakdown, assumptions, operating profile and scenario deltas.
+- **Tax Analysis** — side-by-side Brazilian Simplified Tax Regime, Presumed Profit Regime and Actual Profit Regime, with effective rates, tax component breakdown, assumptions, operating profile and scenario deltas.
 - **Executive Report** — print-ready report that can be saved as PDF directly from the browser.
 - **History & Audit** — simulation versions, document history and user/workflow audit events.
 - **Rules & Sources** — calculation-governance register that clearly distinguishes illustrative software assumptions from professional fiscal validation.
@@ -64,11 +68,11 @@ The public version deliberately uses **illustrative assumptions** to demonstrate
 
 It includes:
 
-- a schedule-based Simples Nacional proxy;
-- service-annex selection using a Factor R proxy;
-- activity-based Lucro Presumido bases;
-- profit-based Lucro Real proxy;
-- IRPJ, surcharge, CSLL, PIS, COFINS, ISS and ICMS proxy components;
+- a schedule-based Brazilian Simplified Tax Regime proxy;
+- service-tier selection using a Factor R proxy;
+- activity-based Presumed Profit Regime bases;
+- profit-based Actual Profit Regime proxy;
+- Corporate Income Tax, income-tax surcharge, Social Contribution on Net Profit, federal social contributions, Service Tax and State VAT proxy components;
 - effective-rate calculations;
 - current-tax baseline comparison;
 - lowest/highest modeled scenario spread.
@@ -81,7 +85,7 @@ It intentionally does **not** represent a production-grade fiscal engine. Eligib
 
 The first run automatically seeds three fictional companies with different profiles:
 
-- a service business focused on Factor R and service annex review;
+- a service business focused on Factor R and service tax tier review;
 - a mixed commerce/services profile;
 - an industrial profile with higher revenue and cost structure.
 
@@ -129,11 +133,11 @@ Supported demo paths:
 |---|---|
 | CSV | Detects a recognized monthly financial matrix and imports it |
 | XLSX/XLSM | Searches worksheets for a recognized monthly matrix |
-| XML | Extracts generic/NF-e-like metadata and values |
-| TXT/DAT | Detects PGDAS-like reference fields when present |
+| XML | Extracts generic/electronic-invoice metadata and values |
+| TXT/DAT | Detects simplified-regime filing reference fields when present |
 | PDF | Stored as evidence for manual review |
 
-Use `data/sample_monthly_financials.csv`, `data/sample_pgdas_like.txt`, and `data/sample_nfe_like.xml` for testing.
+Use `data/sample_monthly_financials.csv`, `data/sample_simplified_regime_filing.txt`, and `data/sample_e_invoice.xml` for testing.
 
 ## REST API
 

@@ -96,7 +96,7 @@ def index():
 
 @bp.get("/api/health")
 def health():
-    return jsonify({"ok": True, "release": "2.0.0", "engine": ENGINE_VERSION, "edition": "public-portfolio"})
+    return jsonify({"ok": True, "release": "2.1.0", "engine": ENGINE_VERSION, "edition": "public-portfolio"})
 
 
 @bp.get("/api/bootstrap")

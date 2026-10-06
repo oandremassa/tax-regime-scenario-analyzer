@@ -129,7 +129,7 @@ def parse_xlsx(path: Path):
         monthly = _monthly_from_rows(data[0], data[1:])
         candidate = {
             "parser": "xlsx_financials" if monthly else "xlsx_generic",
-            "doc_type": "dre" if monthly else "spreadsheet",
+            "doc_type": "income_statement" if monthly else "spreadsheet",
             "sheet": ws.title,
             "monthly_rows": monthly,
             "rows_detected": max(len(data) - 1, 0),
@@ -159,15 +159,15 @@ def parse_xml(path: Path):
         text = (elem.text or "").strip()
         if text and key not in values:
             values[key] = text
-    amount = _num(values.get("vNF") or values.get("vServ") or values.get("valor"))
-    cnpj = values.get("CNPJ")
+    amount = _num(values.get("totalValue") or values.get("amount") or values.get("vNF") or values.get("vServ") or values.get("valor"))
+    company_tax_id = values.get("companyTaxId") or values.get("taxId") or values.get("CNPJ")
     return {
-        "parser": "nfe_xml_proxy" if "vNF" in values else "xml_generic",
-        "doc_type": "nfe" if "vNF" in values else "xml",
-        "document_identifier": values.get("nNF") or values.get("numero") or values.get("Id"),
-        "cnpj_detected": cnpj,
+        "parser": "e_invoice_xml_proxy" if amount or values.get("number") or values.get("nNF") else "xml_generic",
+        "doc_type": "e_invoice" if amount or values.get("number") or values.get("nNF") else "xml",
+        "document_identifier": values.get("number") or values.get("nNF") or values.get("numero") or values.get("Id"),
+        "company_tax_id_detected": company_tax_id,
         "amount_detected": amount,
-        "issue_date": values.get("dhEmi") or values.get("dEmi"),
+        "issue_date": values.get("issueDate") or values.get("dhEmi") or values.get("dEmi"),
         "warnings": [] if values else ["XML has no readable fields."],
     }
 
@@ -176,19 +176,19 @@ def parse_txt(path: Path):
     text = path.read_text(encoding="utf-8", errors="replace")
     upper = text.upper()
     parsed = {"parser": "txt_generic", "doc_type": "txt", "warnings": []}
-    if "PGDAS" in upper or "SIMPLES NACIONAL" in upper:
-        parsed["parser"] = "pgdas_proxy"
-        parsed["doc_type"] = "pgdas"
+    if "SIMPLIFIED REGIME FILING" in upper or "PGDAS" in upper or "SIMPLES NACIONAL" in upper:
+        parsed["parser"] = "simplified_regime_filing_proxy"
+        parsed["doc_type"] = "simplified_regime_filing"
         patterns = {
-            "rbt12": r"RBT12\s*[:=]\s*([\d\.,]+)",
-            "current_tax": r"(?:DAS|TOTAL)\s*[:=]\s*([\d\.,]+)",
-            "revenue_period": r"(?:RECEITA|FATURAMENTO)\s*[:=]\s*([\d\.,]+)",
-            "cnpj_detected": r"CNPJ\s*[:=]\s*([\d\.\-/]+)",
+            "rbt12": r"(?:TWELVE_MONTH_REVENUE|RBT12)\s*[:=]\s*([\d\.,]+)",
+            "current_tax": r"(?:CURRENT_TAX|DAS|TOTAL)\s*[:=]\s*([\d\.,]+)",
+            "revenue_period": r"(?:PERIOD_REVENUE|REVENUE|RECEITA|FATURAMENTO)\s*[:=]\s*([\d\.,]+)",
+            "company_tax_id_detected": r"(?:COMPANY_TAX_ID|CNPJ)\s*[:=]\s*([\d\.\-/]+)",
         }
         for key, pattern in patterns.items():
             m = re.search(pattern, text, flags=re.I)
             if m:
-                parsed[key] = m.group(1) if key == "cnpj_detected" else _num(m.group(1))
+                parsed[key] = m.group(1) if key == "company_tax_id_detected" else _num(m.group(1))
     return parsed
 
 

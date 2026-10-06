@@ -2,32 +2,32 @@
 
 This file documents the public portfolio model, not Brazilian tax advice.
 
-## Simples Nacional proxy
+## Brazilian Simplified Tax Regime proxy
 
-A schedule-based effective-rate function is applied independently to commerce, industry and services. Services use an Annex III / Annex V proxy based on a Factor R threshold. The component breakdown is an illustrative allocation of the total modeled burden.
+A schedule-based effective-rate function is applied independently to commerce, industry and services. Services use a Service Tier III / Service Tier V proxy based on a Factor R threshold. The component breakdown is an illustrative allocation of the total modeled burden.
 
-## Lucro Presumido proxy
+## Presumed Profit Regime proxy
 
-The engine separates service and trade/industry revenue, applies different presumed IRPJ/CSLL bases, includes PIS/COFINS gross rates, company-entered ISS, and a simplified ICMS gross proxy.
+The engine separates service and trade/industry revenue, applies different presumed Corporate Income Tax / Social Contribution bases, includes federal social-contribution gross rates, company-entered Service Tax, and a simplified State VAT gross proxy.
 
-## Lucro Real proxy
+## Actual Profit Regime proxy
 
-The engine uses an operating-profit proxy as the IRPJ/CSLL base, adds gross PIS/COFINS before credits, ISS and a simplified ICMS proxy. It does not model real-world additions/exclusions, tax losses, credits or special regimes.
+The engine uses an operating-profit proxy as the Corporate Income Tax / Social Contribution base, adds gross federal social contributions before credits, Service Tax and a simplified State VAT proxy. It does not model real-world additions/exclusions, tax losses, credits or special regimes.
 
 ## Generated validations
 
 Examples include:
 
 - incomplete 12-month period;
-- missing CNAE/activity;
-- service revenue without confirmed ISS;
-- missing service-annex review;
+- missing business activity code;
+- service revenue without confirmed Service Tax rate;
+- missing service-tier review;
 - missing current regime;
 - zero revenue;
 - unusually high payroll;
 - mixed commerce/services profile;
-- missing DRE evidence;
-- missing PGDAS evidence when the current regime is Simples Nacional.
+- missing income statement evidence;
+- missing simplified-regime filing evidence when the current regime is the Brazilian Simplified Tax Regime.
 
 ## Human review
 

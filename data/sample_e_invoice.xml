@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<electronicInvoice>
+  <number>1001</number>
+  <supplier>
+    <companyTaxId>00000000000000</companyTaxId>
+    <legalName>Northstar Synthetic Supplier Ltd.</legalName>
+  </supplier>
+  <issueDate>2026-09-15</issueDate>
+  <totalValue>125000.00</totalValue>
+</electronicInvoice>
